@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0">
-  <title>Liff Share V7</title>
+  <title>Liff Share V8</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 
@@ -87,7 +87,7 @@
     }
 
     async function sendToGAS() {
-        const url = GAS_URL + "&shareName=" + shareName;
+        const url = GAS_URL + "&shareName=" + encodeURIComponent(shareName);
         try {
 
             const response = await fetch(url);
@@ -103,7 +103,7 @@
                 "GAS fetch failed:",
                 error
             );
-            return "Error on sendToGas: " + error;
+            return "Error on sendToGas: " + error.message;;
         }
     }
 
