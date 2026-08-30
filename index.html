@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>分享訊息 X</title>
+    <title>分享訊息</title>
     <!-- 載入 LIFF SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
@@ -40,92 +40,85 @@
     <button id="retryBtn" onclick="shareMessage()">手動分享</button>
 
     <script>
-        // 替換為你在 LINE Developers console 中取得的 LIFF ID
-        const LIFF_ID = "2011190138-2bRTUaO7"; 
+
+const LIFF_ID = "2011190138-2bRTUaO7"; 
+const BASE_FETCH_URL = "https://script.google.com/macros/s/AKfycbzwLtRdN3SZn8vg1HP-S0kW4tihv7pzw3EHcFZmBEyO/exec?page=gitHub";
+
+async function initializeLiff() {
+    try {
+        // 第一個檢查點
+        alert("1. 準備初始化 LIFF");
+        await liff.init({ liffId: LIFF_ID });
         
-        // 替換為你要 fetch Flex Message JSON 的 API 網址
-        //const FETCH_URL = "https://liff.line.me/2011190138-iTiXj2cS";
-        const BASE_FETCH_URL = "https://script.google.com/macros/s/AKfycbzwLtRdN3SZn8vg1HP-S0kW4tihv7pzw3EHcFZmBEyO/exec?page=gitHub";
-
-        async function initializeLiff() {
-            try {
-                await liff.init({ liffId: LIFF_ID });
-                
-                if (!liff.isLoggedIn()) {
-                    // 如果未登入，引導登入
-                    liff.login({ redirectUri: window.location.href });
-                    return;
-                }
-
-                // 登入成功後直接觸發分享流程
-                await shareMessage();
-
-            } catch (error) {
-                document.getElementById('status').innerText = "LIFF 初始化失敗";
-                console.error("LIFF Initialization failed", error);
-            }
+        if (!liff.isLoggedIn()) {
+            alert("未登入，準備導向登入");
+            liff.login({ redirectUri: window.location.href });
+            return;
         }
 
-        async function shareMessage() {
-            if (!liff.isApiAvailable('shareTargetPicker')) {
-                document.getElementById('status').innerText = "您的環境不支援 Share Target Picker";
-                return;
-            }
+        alert("2. LIFF 初始化成功，準備分享");
+        await shareMessage();
 
-            // 🔍 1. 從網址列取得 id 參數
-            // 假設你的 LIFF 網址是 https://liff.line.me/你的LIFF_ID?id=123
-            const urlParams = new URLSearchParams(window.location.search);
-            const targetId = urlParams.get('id');
+    } catch (error) {
+        alert("❌ LIFF 初始化失敗: " + error.message);
+    }
+}
 
-            if (!targetId) {
-                document.getElementById('status').innerText = "網址缺少 id 參數，無法取得資料";
-                return;
-            }
-            
-            document.getElementById('status').innerText = "正在取得訊息...";
-
-            try {
-
-                // 🔗 2. 將 id 附加到 GAS 網址的後面 (變成 ?id=123)
-                const fetchUrlWithId = `${BASE_FETCH_URL}&id=${targetId}`;
-
-                // Fetch 取得 Flex Message 資料
-                const response = await fetch(fetchUrlWithId);
-                if (!response.ok) throw new Error("API 回應錯誤");
-                
-                // 假設你的 API 直接回傳 flex 的 contents 物件 (bubble 或 carousel)
-                const flexContents = await response.json(); 
-
-                // 組裝成 LINE 訊息格式
-                const messageObj = {
-                    type: "flex",
-                    altText: "收到一個分享訊息", // 顯示在聊天列表的替代文字
-                    contents: flexContents
-                };
-
-                // 2. 喚起 Share Target Picker
-                const shareResult = await liff.shareTargetPicker([messageObj]);
-
-                if (shareResult) {
-                    // 使用者成功分享
-                    document.getElementById('status').innerText = "分享成功！";
-                    // 分享完畢後自動關閉 LIFF 視窗
-                    setTimeout(() => liff.closeWindow(), 1000); 
-                } else {
-                    // 使用者取消了分享 (關閉了 Picker 視窗)
-                    document.getElementById('status').innerText = "已取消分享";
-                    document.getElementById('retryBtn').style.display = "block";
-                }
-
-            } catch (error) {
-                document.getElementById('status').innerText = "取得訊息或分享失敗";
-                document.getElementById('retryBtn').style.display = "block";
-                console.error("Share failed", error);
-            }
+async function shareMessage() {
+    try {
+        if (!liff.isApiAvailable('shareTargetPicker')) {
+            alert("❌ 環境不支援 (請確認是用手機版 LINE 打開，不是電腦版)");
+            return;
         }
 
-        // 網頁載入後啟動
-        window.onload = initializeLiff;
+        // 檢查網址參數
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get('id');
+
+        if (!targetId) {
+            // 如果跑到這裡，代表參數不見了！
+            alert("❌ 抓不到 id！目前的網址是: " + window.location.href);
+            return;
+        }
+        
+        alert("3. 成功抓到 ID: " + targetId);
+
+        // 組合網址並設定強制轉址
+        const fetchUrlWithId = `${BASE_FETCH_URL}&id=${targetId}`;
+        alert("4. 準備 Fetch: " + fetchUrlWithId);
+
+        const response = await fetch(fetchUrlWithId, { redirect: "follow" });
+        if (!response.ok) {
+            throw new Error(`伺服器錯誤: ${response.status}`);
+        }
+        
+        const responseText = await response.text();
+        alert("5. 成功收到 GAS 回應，前 30 個字為: " + responseText.substring(0, 30));
+
+        const flexContents = JSON.parse(responseText); 
+
+        const messageObj = {
+            type: "flex",
+            altText: "收到一個分享訊息", 
+            contents: flexContents
+        };
+
+        alert("6. 準備打開分享好友清單");
+        const shareResult = await liff.shareTargetPicker([messageObj]);
+
+        if (shareResult) {
+            alert("🎉 分享成功！");
+            liff.closeWindow(); 
+        } else {
+            alert("使用者取消分享");
+        }
+
+    } catch (error) {
+        alert("❌ 發生嚴重錯誤: " + error.message);
+    }
+}
+
+window.onload = initializeLiff;
     </script>
 </body>
 </html>
