@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0">
-  <title>Liff Share V4</title>
+  <title>Liff Share V5</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 
@@ -14,6 +14,7 @@
 
     const LIFF_ID = '2011190138-2bRTUaO7';
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzwLtRdN3SZn8vg1HP-S0kW4tihv7pzw3EHcFZmBEyO/dev?page=liff&gibhub=1';
+    const shareName = params.get('shareName');
 
     async function main() {
         try {
@@ -39,8 +40,7 @@
         }
 
         const params = new URLSearchParams(window.location.search);
-        const shareName = params.get('shareName');
-
+        
         if (!shareName) {
             document.getElementById('status').innerText = '缺少shareName';
             return;
