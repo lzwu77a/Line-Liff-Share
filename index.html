@@ -43,9 +43,8 @@
 
     <script>
         const LIFF_ID = "2011190138-2bRTUaO7"; 
-        //const BASE_FETCH_URL = "https://script.google.com/macros/s/AKfycbx78tLvsUbCvEBFbSaOverVMJYf4elS39Ysx-6bSBsF0yxwYoj2EhEa5Kn9uy1cU1COiw/exec?page=gitHub";
-        const BASE_FETCH_URL = "https://liff.line.me/2011190138-iTiXj2cS";
-
+        const BASE_FETCH_URL = "https://script.google.com/macros/s/AKfycbwoUAn6B3F0v_Y18mWTvdqf6FH-tTr5aqf5Uf4rHtl4XRIw_Vx1yOhANa5JpPNbJDpCHA/exec?page=gitHub";
+        
         async function initializeLiff() {
             try {
                 await liff.init({ liffId: LIFF_ID });
@@ -80,7 +79,7 @@
 
             try {
                 // 組合網址並強制跟隨轉址 (解決 GAS CORS 問題)
-                const fetchUrlWithId = `${BASE_FETCH_URL}?id=${targetId}`;
+                const fetchUrlWithId = `${BASE_FETCH_URL}&id=${targetId}`;
                 const response = await fetch(fetchUrlWithId, { redirect: "follow" });
                 
                 if (!response.ok) {
