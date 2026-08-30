@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0">
-  <title>Liff Share V3</title>
+  <title>Liff Share V4</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 
@@ -62,9 +62,9 @@
 
             if (result) {
                 // 分享成功
-                await sendToGAS(result);
+                var gasReturn = await sendToGAS(shareName);
 
-                document.getElementById("status").innerText = "完成";
+                document.getElementById("status").innerText = gasReturn;
             } else {
                 document.getElementById("status").innerText = "取消分享";
                 liff.closeWindow();
