@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0">
-  <title>Liff Share V1</title>
+  <title>Liff Share V2</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 
@@ -17,7 +17,6 @@
 
     async function main() {
         try {
-
             // 1. 初始化 LIFF
             await liff.init({
                liffId: LIFF_ID
@@ -47,14 +46,12 @@
             return;
         }
 
-        const response = await fetch(GAS_URL+'&shareName=123');
+        //const response = await fetch(GAS_URL+'&shareName=123');
         await share();
     }
 
     async function share() {
-
         try {
-
             const result =
                 await liff.shareTargetPicker([{
                     type: "text",
@@ -83,7 +80,7 @@
         if ( !data ) {
             console.log("shareName=" + shareName);
             console.log(JSON.stringify(data));
-            document.getElementById('table-container').innerHTML = "OK";
+            document.getElementById('status').innerHTML = "OK";
             return;
         }
     }
