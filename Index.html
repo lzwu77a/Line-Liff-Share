@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>分享股票</title>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+
+<body>
+
+<div id="status">準備分享...</div>
+
+<script>
+
+const LIFF_ID = '2011190138-iTiXj2cS';
+
+async function main() {
+
+  try {
+
+    // 1. 初始化 LIFF
+    await liff.init({
+      liffId: LIFF_ID
+    });
+
+    // 2. 必須登入
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+
+    // 3. 確認目前環境支援 shareTargetPicker
+    if (!liff.isApiAvailable('shareTargetPicker')) {
+      document.getElementById('status').innerText =
+        '此環境不支援分享功能，請使用 LINE App 開啟。';
+      return;
+    }
+
+    // 4. 從 LIFF URL 取得參數
+    //
+    // 例如：
+    // https://liff.line.me/你的LIFF_ID?symbol=2330
+    //
+    const params = new URLSearchParams(window.location.search);
+
+    const shareName = params.get('shareName');
+
+    if (!shareName) {
+      document.getElementById('status').innerText =
+        '缺少shareName';
+      return;
+    }
+
+    document.getElementById('status').innerText =
+      '正在產生分享內容...';
+
+          google.script.run
+            .withSuccessHandler(displayContent)
+            .withFailureHandler(showError)
+            .getLiffShareData(shareName);
+
+
+    // 5. 請 GAS 產生 Flex
+    google.script.run
+      .withSuccessHandler(async function(flex) {
+
+        try {
+
+          document.getElementById('status').innerText =
+            '請選擇要分享給誰...';
+
+          // 6. 分享
+          /*
+          const result = await liff.shareTargetPicker(
+            [
+              {
+                type: 'flex',
+                altText: '股票資訊',
+                contents: flex
+              }
+            ],
+            {
+              isMultiple: true
+            }
+          );
+          */
+
+            const result = await liff.shareTargetPicker([
+              {
+                type: "text",
+                text: "Hello from LIFF!"
+              }
+            ]);
+
+          // 7. 分享成功
+          if (result) {
+
+            document.getElementById('status').innerText =
+              '分享成功！';
+
+          } else {
+
+            document.getElementById('status').innerText =
+              '已取消分享。';
+
+          }
+
+        } catch (error) {
+
+          console.error(error);
+
+          document.getElementById('status').innerText =
+            '分享失敗：' + error.message;
+
+        }
+
+      })
+      .withFailureHandler(function(error) {
+
+        console.error(error);
+
+        document.getElementById('status').innerText =
+          '產生 Flex 失敗：' + error.message;
+
+      })
+      .createShareFlex(symbol);
+
+  } catch (error) {
+
+    console.error(error);
+
+    document.getElementById('status').innerText =
+      'LIFF 初始化失敗：' + error.message;
+
+  }
+
+}
+
+        // 成功接收到後端回傳的 HTML 字串時執行
+      function displayContent(data) {
+        if ( !data ) {
+          console.log("shareName=" + shareName);
+          console.log(JSON.stringify(data));
+          document.getElementById('table-container').innerHTML = "OK";
+          return;
+        }
+      }
+
+main();
+
+</script>
+
+</body>
+</html>
