@@ -88,6 +88,12 @@
                 
                 const flexContents = await response.json(); 
 
+                // 🛑 新增攔截機制：檢查 GAS 是否回傳了錯誤訊號
+                if (flexContents.error) {
+                    // 如果有錯誤，直接丟出例外，中斷程式往下執行
+                    throw new Error(flexContents.message || "連結已失效");
+                }
+
                 const messageObj = {
                     type: "flex",
                     altText: "收到一個分享訊息", 
@@ -106,9 +112,10 @@
                 }
 
             } catch (error) {
+                // 🛑 如果遇到剛剛丟出的例外，就會跑到這裡，顯示在畫面上
                 document.getElementById('status').style.color = "red";
-                document.getElementById('status').innerText = "取得訊息失敗，請稍後再試。";
-                document.getElementById('retryBtn').style.display = "block";
+                document.getElementById('status').innerText = error.message;
+                //document.getElementById('retryBtn').style.display = "block";
                 console.error("Share failed", error);
             }
         }
