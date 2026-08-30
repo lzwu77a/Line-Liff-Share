@@ -21,6 +21,8 @@
             font-size: 18px;
             color: #333;
             margin-bottom: 20px;
+            text-align: center;
+            padding: 0 20px;
         }
         #retryBtn {
             display: none;
@@ -37,89 +39,81 @@
 <body>
 
     <div id="status">載入中，請稍候...</div>
-    <button id="retryBtn" onclick="shareMessage()">手動分享</button>
+    <button id="retryBtn" onclick="shareMessage()">手動重新分享</button>
 
     <script>
+        const LIFF_ID = "2011190138-2bRTUaO7"; 
+        const BASE_FETCH_URL = "https://script.google.com/macros/s/AKfycbzwLtRdN3SZn8vg1HP-S0kW4tihv7pzw3EHcFZmBEyO/exec?page=gitHub";
 
-const LIFF_ID = "2011190138-2bRTUaO7"; 
-const BASE_FETCH_URL = "https://script.google.com/macros/s/AKfycbxI3-BrZh2wOHUZjRUe6DM1i5avovAZAFA1CfjfJHyguq1JlR6HmX-NeMckZX7yMXpBxg/exec?page=gitHub";
-
-
-async function initializeLiff() {
-    try {
-        // 第一個檢查點
-        alert("1. 準備初始化 LIFF");
-        await liff.init({ liffId: LIFF_ID });
-        
-        if (!liff.isLoggedIn()) {
-            alert("未登入，準備導向登入");
-            liff.login({ redirectUri: window.location.href });
-            return;
+        async function initializeLiff() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                
+                if (!liff.isLoggedIn()) {
+                    liff.login({ redirectUri: window.location.href });
+                    return;
+                }
+                
+                await shareMessage();
+            } catch (error) {
+                document.getElementById('status').innerText = "LIFF 初始化失敗，請重新載入網頁。";
+                console.error("LIFF Initialization failed", error);
+            }
         }
 
-        alert("2. LIFF 初始化成功，準備分享");
-        await shareMessage();
+        async function shareMessage() {
+            if (!liff.isApiAvailable('shareTargetPicker')) {
+                document.getElementById('status').innerText = "您的裝置環境不支援分享功能\n(請確認使用手機版 LINE 打開)";
+                return;
+            }
 
-    } catch (error) {
-        alert("❌ LIFF 初始化失敗: " + error.message);
-    }
-}
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetId = urlParams.get('id');
 
-async function shareMessage() {
-    try {
-        if (!liff.isApiAvailable('shareTargetPicker')) {
-            alert("❌ 環境不支援 (請確認是用手機版 LINE 打開，不是電腦版)");
-            return;
+            if (!targetId) {
+                document.getElementById('status').innerText = "無效的連結：缺少必要的參數。";
+                return;
+            }
+            
+            document.getElementById('status').innerText = "正在取得訊息，準備分享...";
+
+            try {
+                // 組合網址並強制跟隨轉址 (解決 GAS CORS 問題)
+                const fetchUrlWithId = `${BASE_FETCH_URL}&id=${targetId}`;
+                const response = await fetch(fetchUrlWithId, { redirect: "follow" });
+                
+                if (!response.ok) {
+                    throw new Error(`伺服器錯誤: ${response.status}`);
+                }
+                
+                const flexContents = await response.json(); 
+
+                const messageObj = {
+                    type: "flex",
+                    altText: "收到一個分享訊息", 
+                    contents: flexContents
+                };
+
+                const shareResult = await liff.shareTargetPicker([messageObj]);
+
+                if (shareResult) {
+                    document.getElementById('status').innerText = "分享成功！";
+                    // 分享完畢後自動關閉 LIFF 視窗
+                    setTimeout(() => liff.closeWindow(), 1000); 
+                } else {
+                    document.getElementById('status').innerText = "已取消分享";
+                    document.getElementById('retryBtn').style.display = "block";
+                }
+
+            } catch (error) {
+                document.getElementById('status').style.color = "red";
+                document.getElementById('status').innerText = "取得訊息失敗，請稍後再試。";
+                document.getElementById('retryBtn').style.display = "block";
+                console.error("Share failed", error);
+            }
         }
 
-        // 檢查網址參數
-        const urlParams = new URLSearchParams(window.location.search);
-        const targetId = urlParams.get('id');
-
-        if (!targetId) {
-            // 如果跑到這裡，代表參數不見了！
-            alert("❌ 抓不到 id！目前的網址是: " + window.location.href);
-            return;
-        }
-        
-        alert("3. 成功抓到 ID: " + targetId);
-
-        // 組合網址並設定強制轉址
-        const fetchUrlWithId = `${BASE_FETCH_URL}&id=${targetId}`;
-        alert("4. 準備 Fetch: " + fetchUrlWithId);
-
-        const response = await fetch(fetchUrlWithId, { redirect: "follow" });
-        if (!response.ok) {
-            throw new Error(`伺服器錯誤: ${response.status}`);
-        }
-        
-        const responseText = await response.text();
-        alert("5. 成功收到 GAS 回應，前 30 個字為: " + responseText.substring(0, 30));
-
-        const flexContents = JSON.parse(responseText); 
-
-        const messageObj = {
-            type: "flex",
-            altText: "收到一個分享訊息", 
-            contents: flexContents
-        };
-
-        alert("6. 準備打開分享好友清單");
-        const shareResult = await liff.shareTargetPicker([messageObj]);
-
-        if (shareResult) {
-            alert("🎉 分享成功！");
-            liff.closeWindow(); 
-        } else {
-            alert("使用者取消分享");
-        }
-
-    } catch (error) {
-        alert("❌ 發生嚴重錯誤: " + error.message);
-    }
-}
-
-window.onload = initializeLiff;
+        window.onload = initializeLiff;
     </script>
 </body>
 </html>
