@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>正在開啟 PDF...</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 80%;
+            max-width: 300px;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #00B900; /* LINE Green */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status-text {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .error-text {
+            color: #e74c3c;
+            font-size: 14px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="loader" id="loader"></div>
+        <div class="status-text" id="statusMessage">讀取檔案中，請稍候...</div>
+        <div class="error-text" id="errorMessage"></div>
+    </div>
+
+    <!-- 載入 LIFF SDK -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        // ⚠️ 請替換成你自己的 LIFF ID
+        const myLiffId = "請輸入你的_LIFF_ID"; 
+
+        async function main() {
+            try {
+                // 1. 初始化 LIFF
+                await liff.init({ liffId: myLiffId });
+
+                // 2. 取得網址列上的 file_id 參數
+                const urlParams = new URLSearchParams(window.location.search);
+                const fileId = urlParams.get('file_id');
+
+                if (!fileId) {
+                    throw new Error("網址缺少 file_id 參數");
+                }
+
+                // 3. 組合 Google Drive 預覽網址
+                const pdfUrl = `https://drive.google.com/file/d/${fileId}/view?usp=sharing`;
+
+                document.getElementById('statusMessage').innerText = "即將開啟 PDF...";
+
+                // 4. 開啟 PDF (external: true 代表跳轉到手機預設瀏覽器，避免 LINE WebView 擋下載或跑版)
+                liff.openWindow({
+                    url: pdfUrl,
+                    external: true
+                });
+
+                // 5. 等待 1 秒後自動關閉當前的 LIFF 視窗 (讓體驗更順暢，只適用於 LINE App 內部)
+                setTimeout(() => {
+                    if (liff.isInClient()) {
+                        liff.closeWindow();
+                    }
+                }, 1000);
+
+            } catch (error) {
+                // 處理錯誤狀態
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('statusMessage').innerText = "發生錯誤";
+                document.getElementById('statusMessage').style.color = "#e74c3c";
+                document.getElementById('errorMessage').innerText = error.message;
+            }
+        }
+
+        // 啟動主程式
+        main();
+    </script>
+</body>
+</html>
