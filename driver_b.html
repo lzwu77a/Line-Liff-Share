@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>正在開啟 PDF...</title>
+    <!-- 引入 LIFF SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+        }
+        #message {
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #00B900; /* LINE 綠色 */
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="message">
+        <div class="spinner" id="spinner"></div>
+        <div id="status-text">正在載入檔案，請稍候...</div>
+    </div>
+
+    <script>
+        // 請將這裡替換成你的 LIFF ID
+        const MY_LIFF_ID = "請填入你的LIFF_ID"; 
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // 1. 取得網址列中的 file_id 參數
+            const urlParams = new URLSearchParams(window.location.search);
+            const fileId = urlParams.get('file_id');
+
+            // 2. 初始化 LIFF
+            liff.init({ liffId: MY_LIFF_ID })
+                .then(() => {
+                    if (fileId) {
+                        // 組合 Google Drive 預覽網址
+                        const pdfUrl = `https://drive.google.com/file/d/${fileId}/view?usp=sharing`;
+
+                        // 3. 開啟 PDF 檔案
+                        if (liff.isInClient()) {
+                            // 如果在 LINE App 內，強烈建議用外部瀏覽器開啟，避免權限或顯示問題
+                            liff.openWindow({
+                                url: pdfUrl,
+                                external: true
+                            });
+                            
+                            // 延遲一下後自動關閉當前的 LIFF 視窗
+                            setTimeout(() => {
+                                liff.closeWindow();
+                            }, 1000);
+                        } else {
+                            // 如果使用者是用一般電腦或手機瀏覽器點開，直接跳轉即可
+                            window.location.replace(pdfUrl);
+                        }
+                    } else {
+                        // 網址中沒有 file_id 的錯誤處理
+                        document.getElementById('spinner').style.display = 'none';
+                        document.getElementById('status-text').innerText = "開啟失敗：網址未提供檔案 ID (file_id)";
+                        document.getElementById('status-text').style.color = "red";
+                    }
+                })
+                .catch((err) => {
+                    console.error("LIFF Init Error: ", err);
+                    document.getElementById('spinner').style.display = 'none';
+                    document.getElementById('status-text').innerText = "系統錯誤：LIFF 初始化失敗";
+                    document.getElementById('status-text').style.color = "red";
+                });
+        });
+    </script>
+</body>
+</html>
